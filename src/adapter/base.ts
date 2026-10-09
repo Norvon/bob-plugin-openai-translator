@@ -262,6 +262,7 @@ export abstract class BaseAdapter implements ServiceAdapter {
       result: {
         from: query.detectFrom,
         to: query.detectTo,
+        content: { format: 'markdown', text },
         toParagraphs: [text],
       },
     });

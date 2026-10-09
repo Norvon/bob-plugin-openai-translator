@@ -98,7 +98,7 @@ The metadata test fails if the menu and runtime catalog differ.
 - Provider error events are parsed before text deltas.
 - Invalid SSE is an API error, not an empty success.
 - SSE buffering is limited to 1 MiB.
-- Non-streaming output is returned as one paragraph so Bob preserves model formatting and blank lines.
+- Every streaming frame and final result declares `content.format: markdown` and passes the accumulated model text unchanged, including blank lines. A single-element `toParagraphs` remains as the fallback for Bob versions before 1.21.0.
 - Validation completes on every success, error, and unexpected-response path.
 - API keys and authorization headers are never logged.
 
@@ -167,6 +167,8 @@ The official sitemap and plugin sidebar exposed 29 `/plugin/` pages. All 29 were
 | 29 | [Language codes](https://bobtranslate.com/plugin/addition/language.html) | Bob language IDs and supported-language list |
 
 The linked [Bob 1.8 plugin changes](https://bobtranslate.com/blog/2023-05-18-180-plugin.html) were also reviewed for streaming and cancellation behavior.
+
+The [Bob 1.21 Markdown plugin guide](https://bobtranslate.com/blog/2026-09-21-markdown-plugin.html) was reviewed on 2026-10-09 for `content`, cumulative streaming text, and legacy fallback behavior. `src/bob-content.d.ts` supplies the missing `content` declaration while the project uses `@bob-translate/types` 1.1.0.
 
 ## Provider sources
 

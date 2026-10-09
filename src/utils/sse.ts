@@ -199,6 +199,7 @@ export class SseStreamHandler {
         result: {
           from: this.query.detectFrom,
           to: this.query.detectTo,
+          content: { format: 'markdown', text: this.targetText },
           toParagraphs: [this.targetText],
         },
       });

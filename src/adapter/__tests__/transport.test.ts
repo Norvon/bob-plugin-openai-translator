@@ -94,6 +94,7 @@ describe('shared transport', () => {
       result: {
         from: 'en',
         to: 'zh-Hans',
+        content: { format: 'markdown', text: '你好' },
         toParagraphs: ['你好'],
       },
     });
@@ -131,9 +132,80 @@ describe('shared transport', () => {
       result: {
         from: 'en',
         to: 'zh-Hans',
+        content: { format: 'markdown', text: 'Invalid token is text' },
         toParagraphs: ['Invalid token is text'],
       },
     });
+  });
+
+  it.each(['普通解释。', '**Git**：版本控制系统。\n\n例：`git commit`。'])(
+    'preserves non-streaming text in Markdown and legacy results: %s',
+    async (text) => {
+      const { onCompletion, onStream, query } = createQuery();
+      requestHandler = async () => successResponse({ output_text: text });
+
+      await createAdapter(false).translate(query, 'key');
+
+      expect(onStream).not.toHaveBeenCalled();
+      expect(onCompletion).toHaveBeenCalledTimes(1);
+      expect(onCompletion.mock.calls[0][0]).toEqual({
+        result: {
+          from: 'en',
+          to: 'zh-Hans',
+          content: { format: 'markdown', text },
+          toParagraphs: [text],
+        },
+      });
+    },
+  );
+
+  it('sends cumulative Markdown in every compatible API stream frame and completion', async () => {
+    const { onCompletion, onStream, query } = createQuery();
+    const deltas = [
+      '**Gi',
+      't**：版本控制系统。\n',
+      '\n例：`git commit`。\n\n',
+      '```sh\ngit status\n```\n\n- 分支\n- 提交',
+    ];
+    streamHandler = (config) => {
+      for (const content of deltas) {
+        const data = JSON.stringify({ choices: [{ delta: { content } }] });
+        config.streamHandler?.({
+          text: `data: ${data}\n\n`,
+          rawData: {} as never,
+        });
+      }
+      config.streamHandler?.({
+        text: 'data: [DONE]\n\n',
+        rawData: {} as never,
+      });
+      config.handler?.(streamCompletionResponse());
+    };
+    const adapter = getServiceAdapter(
+      createTestConfig({
+        apiUrl: 'https://gateway.example/v1/chat/completions',
+        stream: 'enable',
+      }),
+    );
+
+    await adapter.translate(query, 'key');
+
+    expect(onStream).toHaveBeenCalledTimes(deltas.length);
+    for (let index = 0; index < deltas.length; index += 1) {
+      const text = deltas.slice(0, index + 1).join('');
+      expect(onStream.mock.calls[index][0]).toEqual({
+        result: {
+          from: 'en',
+          to: 'zh-Hans',
+          content: { format: 'markdown', text },
+          toParagraphs: [text],
+        },
+      });
+    }
+    expect(onCompletion).toHaveBeenCalledTimes(1);
+    expect(onCompletion.mock.calls[0][0]).toEqual(
+      onStream.mock.calls[deltas.length - 1][0],
+    );
   });
 
   it('rejects truncated Responses streams without a completed event', async () => {

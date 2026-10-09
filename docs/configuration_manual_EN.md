@@ -60,6 +60,12 @@ Streaming is enabled by default, so text appears as the model generates it. Disa
 
 Both modes respond to Bob's cancellation action. Invalid stream data, API errors, and empty responses are returned as failures rather than blank successful results.
 
+## Markdown display
+
+On Bob 1.21.0 or later with macOS 13 or later, both streaming and completed results render Markdown, including bold text, lists, and code blocks returned by the model. The plugin passes output through unchanged and does not add Markdown syntax.
+
+If you still see literal `**bold**` or backticks, check that Markdown rendering is enabled in Bob's translation preferences. Earlier Bob versions or macOS 12 display plain text. See [Bob's Markdown plugin guide](https://bobtranslate.com/blog/2026-09-21-markdown-plugin.html).
+
 ## Reasoning
 
 By default, the plugin omits reasoning controls and lets the model decide.
